@@ -1,15 +1,13 @@
 const express = require('express');
 const bodyParser = require('body-parser');
 const fs = require('fs');
-const multer = require('multer');
 const app = express();
-const upload = multer({ dest: 'uploads/' });
 
 app.use(bodyParser.urlencoded({ extended: true }));
-app.use(express.static('public')); 
+app.use(express.static('public'));
 
-const writeDataToFile = (data, res) => {
-    fs.writeFile('data.txt', data, err => {
+const appendDataToFile = (data, res) => {
+    fs.appendFile('data.txt', data, (err) => {
         if (err) {
             res.status(500).send('Internal Server Error');
         } else {
@@ -18,20 +16,25 @@ const writeDataToFile = (data, res) => {
     });
 };
 
-const readDataFromFile = res => {
+const readDataFromFile = (res) => {
     fs.readFile('data.txt', 'utf8', (err, data) => {
         if (err) {
             res.status(500).send('Internal Server Error');
         } else {
-            res.send(`<pre>${data}</pre>`);
+            res.send(data);
         }
     });
 };
 
 app.post('/submit', (req, res) => {
     const { name, surname, age, ssn } = req.body;
+    
+    if (!/^\d{11}$/.test(ssn)) {
+        return res.status(400).send('SSN must be exactly 11 digits');
+    }
+    
     const data = `Name: ${name}, Surname: ${surname}, Age: ${age}, SSN: ${ssn}\n`;
-    writeDataToFile(data, res);
+    appendDataToFile(data, res);
 });
 
 app.get('/data', (req, res) => readDataFromFile(res));

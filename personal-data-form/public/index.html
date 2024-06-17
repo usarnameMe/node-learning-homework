@@ -4,9 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Personal Data Form</title>
+    <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <form action="/submit" method="POST">
+    <form id="personalDataForm" action="/submit" method="POST">
         <label for="name">Name:</label>
         <input type="text" id="name" name="name" required><br>
         <label for="surname">Surname:</label>
@@ -14,20 +15,59 @@
         <label for="age">Age:</label>
         <input type="number" id="age" name="age" required><br>
         <label for="ssn">Social Security Number:</label>
-        <input type="text" id="ssn" name="ssn" required><br>
+        <input type="text" id="ssn" name="ssn" required pattern="\d{11}" title="SSN must be exactly 11 digits"><br>
         <button type="submit">Submit</button>
     </form>
-    <button id="showData">Show Data</button>
-    <div id="data"></div>
+   
+    <div id="dataContainer">
+        <button id="toggleData">Show Data</button>
+        <div id="data" class="hidden"></div>
+    </div>
+    <div id="successMessage" class="hidden">Data saved successfully!</div>
 
     <script>
-        document.getElementById('showData').addEventListener('click', () => {
+        document.getElementById('personalDataForm').addEventListener('submit', function(event) {
+            event.preventDefault(); 
+
+            const ssnInput = document.getElementById('ssn');
+            if (!/^\d{11}$/.test(ssnInput.value)) {
+                alert('SSN must be exactly 11 digits');
+                return;
+            }
+
+            const formData = new FormData(this);
+            fetch('/submit', {
+                method: 'POST',
+                body: new URLSearchParams(formData)
+            })
+            .then(response => response.text())
+            .then(data => {
+                document.getElementById('successMessage').classList.remove('hidden');
+                document.getElementById('successMessage').textContent = data;
+                fetchData();
+            });
+        });
+
+        document.getElementById('toggleData').addEventListener('click', () => {
+            const button = document.getElementById('toggleData');
+            const dataDiv = document.getElementById('data');
+            if (button.textContent === "Show Data") {
+                fetchData();
+                button.textContent = "Hide Data";
+                dataDiv.classList.remove('hidden');
+            } else {
+                dataDiv.classList.add('hidden');
+                button.textContent = "Show Data";
+            }
+        });
+
+        function fetchData() {
             fetch('/data')
                 .then(response => response.text())
                 .then(data => {
-                    document.getElementById('data').innerHTML = data;
+                    document.getElementById('data').innerHTML = `<pre>${data}</pre>`;
                 });
-        });
+        }
     </script>
 </body>
 </html>
